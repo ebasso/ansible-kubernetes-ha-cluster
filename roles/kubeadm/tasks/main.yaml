@@ -10,24 +10,22 @@
 - name: set enforce
   command: setenforce 0
 
-- name: install kubeadm packages
-  become: yes
+- name:          Install Kubernetes
   yum:
-    name: "{{item}}"
-    allow_downgrade: yes 
-  with_items:
-    - kubelet-{{kubelet_version}}
-    - kubeadm
-    - kubectl
+    name:        ['kubelet-{{ kubelet_version }}', 'kubeadm-{{ kubeadm_version }}', 'kubectl-{{ kubectl_version }}']
+    state:       installed
+  when:
+    - (ansible_distribution == "RedHat" or ansible_distribution == "CentOS" )
 
 - name: detect docker's cgroup-driver
   shell: docker info 2>/dev/null |grep -i cgroup | cut -d":" -f2 | tr -d " "
   register: docker_cgroup_driver
   
 - replace:
-    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-    regexp: '--cgroup-driver=(systemd|cgroupfs)'
-    replace: '--cgroup-driver={{docker_cgroup_driver.stdout}}'
+    #path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    path: /etc/default/kubelet
+    regexp: 'KUBELET_EXTRA_ARGS=--cgroup-driver=(systemd|cgroupfs)'
+    replace: 'KUBELET_EXTRA_ARGS=--cgroup-driver={{docker_cgroup_driver.stdout}}'
     backup: no
 
 - replace:

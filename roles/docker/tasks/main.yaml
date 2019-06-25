@@ -16,13 +16,11 @@
 - name: install docker dependencies
   become: yes
   yum:
-    name: "{{item}}"
-  with_items:
-    - yum-utils
-    - device-mapper-persistent-data
-    - lvm2
-    - policycoreutils-python
-    - python-pip
+    name:        ['yum-utils', 'device-mapper-persistent-data', 'lvm2', 'policycoreutils-python', 'python-pip']
+    state:       present
+  when:
+    - ansible_os_family == "RedHat"
+    - (ansible_distribution == "RedHat" or ansible_distribution == "CentOS")
 
 - name: Install container-selinux rpm from a remote repo
   yum:
