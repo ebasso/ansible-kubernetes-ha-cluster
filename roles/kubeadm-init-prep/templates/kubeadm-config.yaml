@@ -1,4 +1,4 @@
-apiVersion: kubeadm.k8s.io/v1alpha1
+apiVersion: kubeadm.k8s.io/v1alpha2
 kind: MasterConfiguration
 kubernetesVersion: {{kubernetes_version}}
 networking:
@@ -12,8 +12,25 @@ apiServerCertSANs:
 - {{hostvars[master]['ansible_usehost']}}
 {% endfor %}
 - localhost
+{% if virtual_ip is defined %}
+api:
+  controlPlaneEndpoint: "{{virtual_ip}}:6443"
+{% endif %}
 {% endif %}
 etcd:
+  local:
+      extraArgs:
+        listen-client-urls: "https://127.0.0.1:2379,https://{{ ansible_default_ipv4.address }}:2379"
+        advertise-client-urls: "https://{{ ansible_default_ipv4.address }}:2379"
+        listen-peer-urls: "https://{{ ansible_default_ipv4.address }}:2380"
+        initial-advertise-peer-urls: "https://{{ ansible_default_ipv4.address }}:2380"
+        initial-cluster: "master0_hostname=https://{{ ansible_default_ipv4.address }}:2380"
+      serverCertSANs:
+        - {{ ansible_fqdn }}
+        - {{ ansible_default_ipv4.address }}
+      peerCertSANs:
+        - {{ ansible_fqdn }}
+        - {{ ansible_default_ipv4.address }}
   endpoints:
   - https://localhost:{{etcd_proxy_port}}
 {% for master in groups["k8s-masters"] %}
@@ -24,4 +41,6 @@ etcd:
   keyFile: /etc/kubernetes/pki/etcd/client-key.pem
 apiServerExtraArgs:
   endpoint-reconciler-type: lease
+  enable-admission-plugins: PodSecurityPolicy
 imageRepository: {{docker_registry| trim}}/kubernetes
+# End of file

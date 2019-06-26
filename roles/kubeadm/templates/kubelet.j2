@@ -1,0 +1,2 @@
+KUBELET_EXTRA_ARGS=--cgroup-driver=cgroupfs -pod-infra-container-image={{kubepause_container_image}} {% if eviction_hard is defined %}--eviction-hard={{eviction_hard}}{% endif %}
+

@@ -1,0 +1,14 @@
+{
+  "bip": "1.1.1.1/16",
+{% if insecure_registries is defined %}
+  "insecure-registries": ["{{ insecure_registries }}"],
+{% endif %}
+{% if thinpooldev is defined %}
+  "storage-driver": "devicemapper",
+  "storage-opts": [
+    "dm.thinpooldev={{ thinpooldev }}",
+    "dm.use_deferred_removal=true",
+    "dm.use_deferred_deletion=true"
+  ]
+{% endif %}
+}

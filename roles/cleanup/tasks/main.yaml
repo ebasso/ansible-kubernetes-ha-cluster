@@ -1,50 +1,24 @@
-- name: cleanup kubernetes data
+- name: cleanup kubernetes data - step 1
   shell: |
-    kubeadm reset
+    kubeadm reset --force
     docker kill haproxy
     docker rm haproxy
+
+- name: cleanup kubernetes data - step 2
+  shell: |
     systemctl stop kubelet
     systemctl stop docker
     systemctl stop etcd
     systemctl stop keepalived
-    rm /etc/systemd/system/kubelet.service.d/20-pod-infra-image.conf
-    rm -rf /var/lib/cni/
-    rm -rf /var/lib/kubelet/*
-    rm -rf /etc/keepalived/*
-    rm -rf /etc/cni/
-    rm -r /var/lib/etcd/member
+    systemctl disable kubelet
+    systemctl disable docker
+    systemctl disable etcd
+    systemctl disable keepalived
+
+- name: ip link delete
+  shell: |
     ip link delete cni0
     ip link delete flannel.1
-    mkdir -p /etc/keepalived
-    rm -rf /var/lib/docker
-    rm /usr/local/bin/etcd
-    rm /usr/local/bin/etcdctl
-    rm /usr/local/bin/cfssljson
-    rm /usr/local/bin/cfssl
-    rm -rf /etc/kubernetes
-
-# - name: Close ports
-#   firewalld:
-#     port: "{{item}}"
-#     permanent: true
-#     state: disabled
-#   with_items:
-#     - 6443/tcp
-#     - 2379-2380/tcp
-#     - 10250/tcp
-#     - 10251/tcp
-#     - 10252/tcp
-#     - 10053/tcp
-#     - 10053/udp
-#     - 10255/tcp
-#     - 30000-32767/tcp
-#     - 8082/tcp
-#     - 8472/udp
-#     - 8285/udp
-#     - 9898/tcp
-#     - 9100/tcp
-#     - 4194/tcp
-#     - 10254/tcp
 
 - name: remove yum packages
   become: yes
@@ -56,12 +30,14 @@
     - kubeadm
     - kubectl
     - docker-ce
-    - yum-utils
-    - device-mapper-persistent-data
-    - lvm2
-    - policycoreutils-python
-    - python-pip
+    - docker-ce-cli
+#    - yum-utils
+#    - device-mapper-persistent-data
+#    - lvm2
+#    - policycoreutils-python
+#    - python-pip
     - container-selinux
+    - docker-ce-selinux
 
 - name: Remove Artifactory repo
   yum_repository:
@@ -77,3 +53,47 @@
   yum_repository:
     name: kubernetes
     state: absent
+
+- name: cleanup directories and files
+  shell: |
+    rm /etc/systemd/system/kubelet.service.d/20-pod-infra-image.conf
+    rm /etc/sysctl.d/k8s.conf
+    rm /etc/sysconfig/kubelet
+    rm -fr /tmp/kubeadm-ha
+    rm -rf /var/lib/cni/
+    rm -rf /var/lib/kubelet/*
+    rm -rf /etc/keepalived/*
+    rm -rf /etc/cni/
+    rm -r /var/lib/etcd/member
+    mkdir -p /etc/keepalived
+    rm -rf /var/lib/docker
+    rm /usr/local/bin/etcd
+    rm /usr/local/bin/etcdctl
+    rm /usr/local/bin/cfssljson
+    rm /usr/local/bin/cfssl
+    rm -rf /etc/kubernetes
+    rm -rf /etc/docker
+    rm -rf /run/docker
+
+- name: Close ports
+  firewalld:
+    port: "{{item}}"
+    permanent: true
+    state: disabled
+  with_items:
+    - 6443/tcp
+    - 2379-2380/tcp
+    - 10250/tcp
+    - 10251/tcp
+    - 10252/tcp
+    - 10053/tcp
+    - 10053/udp
+    - 10255/tcp
+    - 30000-32767/tcp
+    - 8082/tcp
+    - 8472/udp
+    - 8285/udp
+    - 9898/tcp
+    - 9100/tcp
+    - 4194/tcp
+    - 10254/tcp

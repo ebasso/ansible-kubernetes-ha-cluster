@@ -5,6 +5,12 @@
     name: firewalld
     enabled: yes
 
+# Port	Mode  Service	Stacks
+# 30379	tcp	  haproxy-redis	orientme, customizer
+# 30301	tcp	  mw-proxy	customizer
+# 30099	tcp	  elasticsearch	elasticsearch
+# 32333	tcp	  kibana	elasticstack
+# 32080	tcp   ingress (http)	orientme, customizer, sanity
 - name: Open ports
   firewalld:
     port: "{{item}}"

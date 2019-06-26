@@ -1,4 +1,4 @@
-- include_vars: ../../../../whis-platform/inventory/group_vars/local/vault
+#- include_vars: ../../../../whis-platform/inventory/group_vars/local/vault
 - name: Generate etcd certs for each master node
   shell: |
     cd /etc/kubernetes/pki/etcd
@@ -42,7 +42,7 @@
     /usr/local/bin/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer config.json | /usr/local/bin/cfssljson -bare peer
 
 
-- name: Download etcd
+- name: Download etcd public repo
   get_url:
     url: https://na.artifactory.swg-devops.com:443/artifactory/wh-imaging-prereqs-generic-local/tars/etcd-{{etcd_version}}-linux-amd64.tar.gz
     dest: /tmp/
@@ -50,6 +50,14 @@
     force_basic_auth: yes
     url_password: "{{docker_registry_password}}"
     url_username: "{{docker_registry_username}}"
+  when: setup=="public"
+
+- name: Download etcd private repo
+  get_url:
+    url: "{{ private_repo }}/etcd-{{etcd_version}}-linux-amd64.tar.gz"
+    dest: /tmp/
+    mode: 0710
+  when: setup=="private"
 
 - name: Unarchive etcd
   unarchive:

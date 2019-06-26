@@ -9,86 +9,109 @@
 
 - name: set enforce
   command: setenforce 0
+  ignore_errors: true
 
 - name:          Install Kubernetes
   yum:
     name:        ['kubelet-{{ kubelet_version }}', 'kubeadm-{{ kubeadm_version }}', 'kubectl-{{ kubectl_version }}']
     state:       installed
-  when:
-    - (ansible_distribution == "RedHat" or ansible_distribution == "CentOS" )
+  when: (ansible_distribution == "RedHat" or ansible_distribution == "CentOS" )
+
+# Remove kubernetes.repo repo to not upgrade
+- name: Remove kubernetes repo
+  file: 
+    path: "/etc/yum.repos.d/kubernetes.repo"
+    state: absent
+  ignore_errors: true
+
+- name: restart and enable kubelet.service
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kubelet
+    enabled: yes
 
 - name: detect docker's cgroup-driver
   shell: docker info 2>/dev/null |grep -i cgroup | cut -d":" -f2 | tr -d " "
   register: docker_cgroup_driver
-  
-- replace:
-    #path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-    path: /etc/default/kubelet
-    regexp: 'KUBELET_EXTRA_ARGS=--cgroup-driver=(systemd|cgroupfs)'
-    replace: 'KUBELET_EXTRA_ARGS=--cgroup-driver={{docker_cgroup_driver.stdout}}'
-    backup: no
 
-- replace:
-    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-    regexp: 'cadvisor-port=0'
-    replace: 'cadvisor-port=4194'
-    backup: no
+## kubernetes 1.11 < /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+#- replace:
+#    path: /etc/default/kubelet
+#    regexp: '--cgroup-driver=(systemd|cgroupfs)'
+#    replace: '--cgroup-driver={{docker_cgroup_driver.stdout}}'
+#    backup: no
+
+#- replace:
+#    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+#    regexp: 'cadvisor-port=0'
+#    replace: 'cadvisor-port=4194'
+#    backup: no
   
-- name: modprobe
+- name: modprobe br_netfilter
   command: modprobe br_netfilter
 
-- name: Add netbridge config ip6
-  lineinfile:
-    path: /etc/sysctl.d/k8s.conf
-    line: 'net.bridge.bridge-nf-call-ip6tables = 1'
-    state: present
-    create: yes
+- name:            "Add netbridge config - /etc/sysctl.d/k8s.conf"
+  template:
+    src:           k8s.conf.j2
+    dest:          /etc/sysctl.d/k8s.conf
 
-- name: Add netbridge config ip4
-  lineinfile:
-    path: /etc/sysctl.d/k8s.conf
-    line: 'net.bridge.bridge-nf-call-iptables = 1'
-    state: present
-    create: yes
+#- name: Add netbridge config ip6
+#  lineinfile:
+#    path: /etc/sysctl.d/k8s.conf
+#    line: 'net.bridge.bridge-nf-call-ip6tables = 1'
+#    state: present
+#    create: yes
+#
+#- name: Add netbridge config ip4
+#  lineinfile:
+#    path: /etc/sysctl.d/k8s.conf
+#    line: 'net.bridge.bridge-nf-call-iptables = 1'
+#    state: present
+#    create: yes
 
 - name: update sysctl
   command: sysctl --system
 
-- set_fact:
-   eviction_hard: "{{ kubelet_masters_eviction_hard }} "
+- name: Set facts for kubelet_masters_eviction_hard
+  set_fact:
+    eviction_hard: "{{ kubelet_masters_eviction_hard }} "
   when: inventory_hostname in groups["k8s-masters"]
 
-- set_fact:
-   eviction_hard: "{{ kubelet_workers_eviction_hard }} "
+- name: Set facts for kubelet_workers_eviction_hard
+  set_fact:
+    eviction_hard: "{{ kubelet_workers_eviction_hard }} "
   when: inventory_hostname in groups["k8s-workers"]
 
-- name: change pause container to private registry and add eviction hard
-  lineinfile:
-    path: /etc/systemd/system/kubelet.service.d/20-pod-infra-image.conf
-    create: yes
-    state: present
-    line: |
-       [Service]
-       Environment="KUBELET_EXTRA_ARGS=--pod-infra-container-image={{kubepause_container_image}} --eviction-hard={{eviction_hard}}"
+#- name: change pause container to private registry and add eviction hard
+#  lineinfile:
+#    path: /etc/systemd/system/kubelet.service.d/20-pod-infra-image.conf
+#    create: yes
+#    state: present
+#    line: |
+#       [Service]
+#       Environment="KUBELET_EXTRA_ARGS=--pod-infra-container-image={{kubepause_container_image}} --eviction-hard={{eviction_hard}}"
 
 
+#- name: "Pulling image {{ item }}"
+#  shell: docker pull "{{ item }}"
+#  with_items:
+#    - "{{ kubeproxy_container_image }}"
+#    - "{{ kubepause_container_image }}"
+#    - "{{ flannel_container_image }}"
+#    - "{{ heapster_container_image }}"
+#    - "{{ kubedns_container_image }}"
+#    - "{{ kubednsmasq_container_image }}"
+#    - "{{ kubednssidecar_container_image }}"
 
-
-
-- name: "Pulling image {{ item }}"
-  shell: docker pull "{{ item }}"
-  with_items:
-    - "{{ kubeproxy_container_image }}"
-    - "{{ kubepause_container_image }}"
-    - "{{ flannel_container_image }}"
-    - "{{ heapster_container_image }}"
-    - "{{ kubedns_container_image }}"
-    - "{{ kubednsmasq_container_image }}"
-    - "{{ kubednssidecar_container_image }}"
+- name:            "Configure KUBELET_EXTRA_ARGS at /etc/sysconfig/kubelet"
+  template:
+    src:           kubelet.j2
+    dest:          /etc/sysconfig/kubelet
  
-#- name: restart kubelet
-#  systemd:
-#    state: restarted
-#    daemon_reload: yes
-#    name: kubelet
-#    enabled: yes
+- name: restart kubelet
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kubelet
+    enabled: yes

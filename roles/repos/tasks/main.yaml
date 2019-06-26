@@ -1,4 +1,30 @@
 #- include_vars: ../../../../whis-platform/inventory/group_vars/local/vault
+
+- name:          Upgrade all packages before docker and k8s
+  yum:           
+    name: "*"
+    state: latest
+
+- name: install docker dependencies
+  become: yes
+  yum:
+    name:        ['yum-utils','device-mapper-persistent-data','lvm2','policycoreutils-python','python-pip','python-docker-py','git']
+    state:       present
+  when:
+    - ansible_os_family == "RedHat"
+    - (ansible_distribution == "RedHat" or ansible_distribution == "CentOS")
+
+- name: install kubeadm dependencies
+  become: yes
+  yum:
+    name:        ['ebtables', 'ethtool']
+    state:       present
+  when:
+    - ansible_os_family == "RedHat"
+    - (ansible_distribution == "RedHat" or ansible_distribution == "CentOS")
+
+ 
+## TODO: @ebasso need investigation 
 #- name: Add Artifactory repo
 #  yum_repository:
 #    name: Artifactory
@@ -29,8 +55,8 @@
   yum_repository:
     name: docker-ce
     description: docker-ce stable repo
-    baseurl: "{{ docker_repo }}/linux/centos/7/$basearch/stable"
-    gpgkey:  "{{ docker_repo }}/linux/centos/gpg"
+    baseurl: "{{ docker_repo }}/centos/7/$basearch/stable"
+    gpgkey:  "{{ docker_repo }}/centos/gpg"
     gpgcheck: yes
     enabled: yes
   when: setup=="private"
