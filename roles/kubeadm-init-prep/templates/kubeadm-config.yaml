@@ -24,7 +24,7 @@ etcd:
         advertise-client-urls: "https://{{ ansible_default_ipv4.address }}:2379"
         listen-peer-urls: "https://{{ ansible_default_ipv4.address }}:2380"
         initial-advertise-peer-urls: "https://{{ ansible_default_ipv4.address }}:2380"
-        initial-cluster: "master0_hostname=https://{{ ansible_default_ipv4.address }}:2380"
+        initial-cluster: "{{ ansible_fqdn }}=https://{{ ansible_default_ipv4.address }}:2380"
       serverCertSANs:
         - {{ ansible_fqdn }}
         - {{ ansible_default_ipv4.address }}

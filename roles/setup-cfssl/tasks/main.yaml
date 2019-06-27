@@ -1,22 +1,16 @@
 #- include_vars: ../../../../whis-platform/inventory/group_vars/local/vault
 - name: Download cfssl public repo
   get_url:
-    url: https://na.artifactory.swg-devops.com/artifactory/wh-imaging-prereqs-generic-local/bin/cfssl_linux-amd64
+    url: http://pkg.cfssl.org/R1.2/cfssl_linux-amd64
     dest: /usr/local/bin/cfssl
     mode: 0710
-    force_basic_auth: yes
-    url_password: "{{docker_registry_password}}"
-    url_username: "{{docker_registry_username}}"
   when: setup=="public"
     
 - name: Download cfssljson public repo
   get_url:
-    url: https://na.artifactory.swg-devops.com/artifactory/wh-imaging-prereqs-generic-local/bin/cfssljson_linux-amd64
+    url: http://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
     dest: /usr/local/bin/cfssljson
     mode: 0710
-    force_basic_auth: yes
-    url_password: "{{docker_registry_password}}"
-    url_username: "{{docker_registry_username}}"
   when: setup=="public"
 
 - name: Download cfssl private repo
@@ -24,6 +18,7 @@
     url: "{{ private_repo }}/cfssl_linux-amd64"
     dest: /usr/local/bin/cfssl
     mode: 0710
+    #checksum: sha256:eb34ab2179e0b67c29fd55f52422a94fe751527b06a403a79325fed7cf0145bd
   when: setup=="private"
     
 - name: Download cfssljson private repo
@@ -31,4 +26,5 @@
     url: "{{ private_repo }}/cfssljson_linux-amd64"
     dest: /usr/local/bin/cfssljson
     mode: 0710
+    #checksum: sha256:1c9e628c3b86c3f2f8af56415d474c9ed4c8f9246630bd21c3418dbe5bf6401e
   when: setup=="private"

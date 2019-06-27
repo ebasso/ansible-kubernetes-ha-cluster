@@ -44,12 +44,9 @@
 
 - name: Download etcd public repo
   get_url:
-    url: https://na.artifactory.swg-devops.com:443/artifactory/wh-imaging-prereqs-generic-local/tars/etcd-{{etcd_version}}-linux-amd64.tar.gz
+    url: https://storage.googleapis.com/etcd/{{etcd_version}}/etcd-{{etcd_version}}-linux-amd64.tar.gz
     dest: /tmp/
     mode: 0710
-    force_basic_auth: yes
-    url_password: "{{docker_registry_password}}"
-    url_username: "{{docker_registry_username}}"
   when: setup=="public"
 
 - name: Download etcd private repo

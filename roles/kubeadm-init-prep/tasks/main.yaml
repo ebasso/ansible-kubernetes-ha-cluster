@@ -7,3 +7,6 @@
   template:
     src: kubeadm-config.yaml
     dest: /tmp/kubeadm-ha/kubeadm-config.yaml
+
+#PEER_NAME={{ inventory_hostname }}
+#PRIVATE_IP={{ hostvars[inventory_hostname]['ansible_usehost'] }}

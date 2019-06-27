@@ -1,6 +1,13 @@
-# Ansible Playbooks To setup cross-datacenters Kubernetes HA (multi-master) on Redhat Enterprise Linux 7.  
+# Ansible Playbooks To setup cross-datacenters Kubernetes HA (multi-master).  
 
-This repository provides Ansible Playbooks To setup Kubernetes HA on Redhat Enterprise Linux 7. The playbooks are mainly inspired by Kubeadm documentation and other ansible tentatives on github. The playbooks could be used separately or as one playbook for a fully fledged HA cluster. 
+Fork from github.com/IBM/ansible-kubernetes-ha-cluster
+
+This repository provides Ansible Playbooks To setup Kubernetes HA. The playbooks are mainly inspired by Kubeadm documentation and other ansible tentatives on github. The playbooks could be used separately or as one playbook for a fully fledged HA cluster. 
+
+Supported versions:
+
+* Redhat Enterprise Linux 7.2+
+* CentOS Linux 7.6+
 
 
 # Prerequisites: 
