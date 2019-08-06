@@ -1,5 +1,5 @@
 - hosts: k8s-nodes
   become: yes
   roles:
-    - ajustes
+    - devmapper-config
 

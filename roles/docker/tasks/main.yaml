@@ -38,12 +38,12 @@
     src:           daemon.json.bip.j2
     dest:          /etc/docker/daemon.json
 
-- name: restart docker
-  systemd: 
-    name: docker 
-    state: restarted
-    daemon_reload: yes
-    enabled: yes
+#- name: restart docker
+#  systemd: 
+#    name: docker 
+#    state: restarted
+#    daemon_reload: yes
+#    enabled: yes
 
 - name:            Configure docker device mapper
   template:

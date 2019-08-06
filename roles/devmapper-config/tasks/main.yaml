@@ -1,0 +1,30 @@
+#- name: remove lvs
+#  shell: |
+#    lvremove -y /dev/dockerVg/lv_thinpool
+##    lvremove /dev/rootvg/lv_devsdx
+
+- name: create lvs
+  shell: |
+    lvcreate -y -L 45g --wipesignatures y -n lv_thinpool dockerVg
+    lvcreate -y -L 1g --wipesignatures y -n lv_thinpoolmeta dockerVg
+
+- name: run lvconvert
+  shell: |
+    lvconvert -y --zero n -c 512K --thinpool dockerVg/lv_thinpool --poolmetadata dockerVg/lv_thinpoolmeta
+
+- name: config lvm profiel
+  shell: |
+    cat > /etc/lvm/profile/dockerVg-lv_thinpool.profile  << EOF
+    activation {
+      thin_pool_autoextend_threshold=80
+      thin_pool_autoextend_percent=20
+    } 
+    EOF
+
+- name: change metadata
+  shell: |
+    lvchange --metadataprofile dockerVg-lv_thinpool dockerVg/lv_thinpool
+
+- name: create lvs monitor
+  shell: |
+    lvs -o+seg_monitor

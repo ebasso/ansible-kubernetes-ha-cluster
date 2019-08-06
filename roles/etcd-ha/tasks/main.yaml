@@ -12,19 +12,22 @@
     insertbefore: '"example.net",'
     backup: no
 
-- replace:
+- name: Replace CN on config.json
+  replace:
     path: /etc/kubernetes/pki/etcd/config.json
     regexp: 'CN/{s/example\.net'
     replace: "{{ inventory_hostname }}"
     backup: no
 
-- replace:
+- name: Replace host on config.json
+  replace:
     path: /etc/kubernetes/pki/etcd/config.json
     regexp: 'www\.example\.net'
     replace: "{{ hostvars[inventory_hostname]['ansible_usehost'] }}"
     backup: no
 
-- replace:
+- name: Replace domain on config.json
+  replace:
     path: /etc/kubernetes/pki/etcd/config.json
     regexp: 'example\.net'
     replace: "{{ inventory_hostname }}"
